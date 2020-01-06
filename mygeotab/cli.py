@@ -16,8 +16,7 @@ import click
 import mygeotab
 import mygeotab.api
 import mygeotab.dates
-
-from six.moves import configparser
+import configparser
 
 
 class Session(object):

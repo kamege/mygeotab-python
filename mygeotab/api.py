@@ -15,16 +15,15 @@ import ssl
 import sys
 
 import requests
-import six
 from requests.adapters import HTTPAdapter
 from requests.exceptions import Timeout
 from requests.packages import urllib3
-from six.moves import UserList
-from six.moves.urllib.parse import urlparse
 
 from . import __title__, __version__
 from .exceptions import AuthenticationException, MyGeotabException, TimeoutException
 from .serializers import json_deserialize, json_serialize
+from collections import UserList
+from urllib.parse import urlparse
 
 DEFAULT_TIMEOUT = 300
 
@@ -313,7 +312,7 @@ class EntityList(UserList):
 
         def sort_by_key(entity):
             prop = entity[key]
-            if isinstance(prop, six.string_types):
+            if isinstance(prop, str):
                 return prop.lower()
             return prop
 
