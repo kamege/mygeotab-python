@@ -3,6 +3,14 @@
 Changes
 -------
 
+1.0.0 (Unreleased)
+++++++++++++++++++
+
+**Improvements**
+
+- Drop support for Python 2 🎉.
+
+
 0.8.5 (2019-10-07)
 ++++++++++++++++++
 
