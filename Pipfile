@@ -22,7 +22,7 @@ pytest-monkeytype = {markers = "python_version >= '3.6'",version = "*"}
 pandas = "*"
 
 [packages]
-mygeotab = {editable = true,path = "."}
+mygeotab = {path = "."}
 
 [pipenv]
 allow_prereleases = true
