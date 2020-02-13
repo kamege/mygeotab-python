@@ -13,8 +13,8 @@ import copy
 import re
 import ssl
 import sys
+from asyncio.exceptions import TimeoutError
 from collections import UserList, namedtuple
-from concurrent.futures import TimeoutError
 from typing import List, Optional
 from urllib.parse import urlparse
 
