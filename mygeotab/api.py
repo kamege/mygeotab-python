@@ -9,11 +9,11 @@ Public objects and methods wrapping the MyGeotab API.
 
 from __future__ import unicode_literals
 
+import asyncio
 import copy
 import re
 import ssl
 import sys
-from asyncio.exceptions import TimeoutError
 from collections import UserList, namedtuple
 from typing import List, Optional
 from urllib.parse import urlparse
@@ -633,7 +633,7 @@ async def _query_async(
             response.raise_for_status()
             content_type = response.headers.get("Content-Type")
             body = await response.text()
-    except TimeoutError:
+    except asyncio.TimeoutError:
         raise TimeoutException(server)
     if content_type and "application/json" not in content_type.lower():
         return body

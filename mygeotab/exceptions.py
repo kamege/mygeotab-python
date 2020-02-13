@@ -7,6 +7,8 @@ mygeotab.exceptions
 Exceptions thrown by the MyGeotab API.
 """
 
+from typing import Optional
+
 
 class MyGeotabException(IOError):
     """There was an exception while handling your call.
@@ -36,7 +38,7 @@ class AuthenticationException(IOError):
     """Unsuccessful authentication with the server.
     """
 
-    def __init__(self, username: str, database: str, server: str, *args):
+    def __init__(self, username: str, database: Optional[str], server: Optional[str], *args):
         """Initialize AuthenticationException with username, database, and server.
 
         :param username: The username used for MyGeotab servers. Usually an email address.
