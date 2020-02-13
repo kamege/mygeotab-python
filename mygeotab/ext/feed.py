@@ -8,11 +8,11 @@ A simple data feed wrapper, written as an extension to the MyGeotab API object.
 """
 
 import abc
-
 from threading import Thread
 from time import sleep
+from typing import List, Optional
 
-from mygeotab import api
+from mygeotab import API, api
 
 
 class DataFeedListener(object):
@@ -22,7 +22,7 @@ class DataFeedListener(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def on_data(self, data):
+    def on_data(self, data: List[dict]):
         """Called when rows of data are received.
 
         :param data: A list of data objects.
@@ -30,7 +30,7 @@ class DataFeedListener(object):
         return
 
     @abc.abstractmethod
-    def on_error(self, error):
+    def on_error(self, error: dict):
         """Called when server errors are encountered. Return False to close the stream.
 
         :rtype: bool
@@ -45,7 +45,15 @@ class DataFeed(object):
     from DataFeedListener to pass in.
     """
 
-    def __init__(self, client_api, listener, type_name, interval, search=None, results_limit=None):
+    def __init__(
+        self,
+        client_api: API,
+        listener: DataFeedListener,
+        type_name: str,
+        interval: float,
+        search: Optional[dict] = None,
+        results_limit: Optional[int] = None,
+    ):
         """Initializes the DataFeed object.
 
         :param client_api: The MyGeotab API object.
@@ -63,7 +71,7 @@ class DataFeed(object):
         self.results_limit = results_limit
         self.running = False
         self._version = None
-        self._thread = None
+        self._thread: Optional[Thread] = None
 
     def _run(self):
         """Runner for the Data Feed.
@@ -87,7 +95,7 @@ class DataFeed(object):
             sleep(self.interval)
         self.running = False
 
-    def start(self, threaded=True):
+    def start(self, threaded: bool = True):
         """Start the data feed.
 
         :param threaded: If True, run in a separate thread.

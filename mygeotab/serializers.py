@@ -33,7 +33,7 @@ def json_serialize(obj):
     return json.dumps(obj, default=object_serializer, separators=(",", ":"))
 
 
-def json_deserialize(json_str):
+def json_deserialize(json_str: str):
     if use_rapidjson:
         return rapidjson.loads(json_str, datetime_mode=DATETIME_MODE)
     return json.loads(json_str, object_hook=object_deserializer)

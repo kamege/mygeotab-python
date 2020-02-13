@@ -12,7 +12,7 @@ class MyGeotabException(IOError):
     """There was an exception while handling your call.
     """
 
-    def __init__(self, full_error, *args, **kwargs):
+    def __init__(self, full_error: dict, *args):
         """Initialize MyGeotabException with the full error from the server.
 
         :param full_error: The full JSON-decoded error.
@@ -23,7 +23,7 @@ class MyGeotabException(IOError):
         self.message = main_error["message"]
         self.data = main_error.get("data")
         self.stack_trace = main_error.get("stackTrace")
-        super(MyGeotabException, self).__init__(self.message, *args, **kwargs)
+        super(MyGeotabException, self).__init__(self.message, *args)
 
     def __str__(self):
         error_str = "{0}\n{1}".format(self.name, self.message)
@@ -36,7 +36,7 @@ class AuthenticationException(IOError):
     """Unsuccessful authentication with the server.
     """
 
-    def __init__(self, username, database, server, *args, **kwargs):
+    def __init__(self, username: str, database: str, server: str, *args):
         """Initialize AuthenticationException with username, database, and server.
 
         :param username: The username used for MyGeotab servers. Usually an email address.
@@ -46,7 +46,7 @@ class AuthenticationException(IOError):
         self.username = username
         self.database = database
         self.server = server
-        super(AuthenticationException, self).__init__(self.message, *args, **kwargs)
+        super(AuthenticationException, self).__init__(self.message, *args)
 
     def __str__(self):
         return self.message
