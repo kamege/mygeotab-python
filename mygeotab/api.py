@@ -13,8 +13,9 @@ import copy
 import re
 import ssl
 import sys
-from collections import UserList
+from collections import UserList, namedtuple
 from concurrent.futures import TimeoutError
+from typing import List, Optional
 from urllib.parse import urlparse
 
 import aiohttp
@@ -30,12 +31,69 @@ from .serializers import json_deserialize, json_serialize
 DEFAULT_TIMEOUT = 300
 
 
+MultiCallParam = namedtuple("MultiCallParam", ["call_name", "parameters"])
+
+
+class Credentials(object):
+    """The MyGeotab Credentials object.
+    """
+
+    def __init__(
+        self,
+        username: str,
+        session_id: Optional[str],
+        database: Optional[str],
+        server: str,
+        password: Optional[str] = None,
+    ):
+        """Initialize the Credentials object.
+
+        :param username: The username used for MyGeotab servers. Usually an email address.
+        :type username: str
+        :param session_id: A session ID, assigned by the server.
+        :type session_id: str
+        :param database: The database or company name. Optional as this usually gets resolved upon authentication.
+        :type database: str or None
+        :param server: The server ie. my23.geotab.com. Optional as this usually gets resolved upon authentication.
+        :type server: str or None
+        :param password: The password associated with the username. Optional if `session_id` is provided.
+        :type password: str or None
+        """
+        self.username = username
+        self.session_id = session_id
+        self.database = database
+        self.server = server
+        self.password = password
+
+    def __str__(self):
+        return "{0} @ {1}/{2}".format(self.username, self.server, self.database)
+
+    def __repr__(self):
+        return "Credentials(username={username}, database={database})".format(
+            username=self.username, database=self.database
+        )
+
+    def get_param(self):
+        """A simple representation of the credentials object for passing into the API.authenticate() server call.
+
+        :return: The simple credentials object for use by API.authenticate().
+        :rtype: dict
+        """
+        return dict(userName=self.username, sessionId=self.session_id, database=self.database)
+
+
 class API(object):
     """A simple and Pythonic wrapper for the MyGeotab API.
     """
 
     def __init__(
-        self, username, password=None, database=None, session_id=None, server="my.geotab.com", timeout=DEFAULT_TIMEOUT
+        self,
+        username: str,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+        session_id: Optional[str] = None,
+        server: str = "my.geotab.com",
+        timeout: int = DEFAULT_TIMEOUT,
     ):
         """Initialize the MyGeotab API object with credentials.
 
@@ -78,7 +136,7 @@ class API(object):
         """
         return not any(s in get_api_url(self._server) for s in ["127.0.0.1", "localhost"])
 
-    def call(self, method, **parameters):
+    def call(self, method: str, **parameters):
         """Makes a call to the API.
 
         :param method: The method name.
@@ -114,7 +172,7 @@ class API(object):
                     )
             raise
 
-    def multi_call(self, calls):
+    def multi_call(self, calls: List[MultiCallParam]):
         """Performs a multi-call to the API.
 
         :param calls: A list of call 2-tuples with method name and params
@@ -128,7 +186,7 @@ class API(object):
         formatted_calls = [dict(method=call[0], params=call[1] if len(call) > 1 else {}) for call in calls]
         return self.call("ExecuteMultiCall", calls=formatted_calls)
 
-    def get(self, type_name, **parameters):
+    def get(self, type_name: str, **parameters):
         """Gets entities using the API. Shortcut for using call() with the 'Get' method.
 
         :param type_name: The type of entity.
@@ -148,7 +206,7 @@ class API(object):
             parameters = dict(search=parameters, resultsLimit=results_limit)
         return EntityList(self.call("Get", type_name=type_name, **parameters), type_name=type_name)
 
-    def add(self, type_name, entity):
+    def add(self, type_name: str, entity: dict):
         """Adds an entity using the API. Shortcut for using call() with the 'Add' method.
 
         :param type_name: The type of entity.
@@ -162,7 +220,7 @@ class API(object):
         """
         return self.call("Add", type_name=type_name, entity=entity)
 
-    def set(self, type_name, entity):
+    def set(self, type_name: str, entity: dict):
         """Sets an entity using the API. Shortcut for using call() with the 'Set' method.
 
         :param type_name: The type of entity.
@@ -174,7 +232,7 @@ class API(object):
         """
         return self.call("Set", type_name=type_name, entity=entity)
 
-    def remove(self, type_name, entity):
+    def remove(self, type_name: str, entity: dict):
         """Removes an entity using the API. Shortcut for using call() with the 'Remove' method.
 
         :param type_name: The type of entity.
@@ -186,7 +244,7 @@ class API(object):
         """
         return self.call("Remove", type_name=type_name, entity=entity)
 
-    def authenticate(self, is_global=True):
+    def authenticate(self, is_global: bool = True):
         """Authenticates against the API server.
 
         :param is_global: If True, authenticate globally. Local login if False.
@@ -196,10 +254,12 @@ class API(object):
         :return: A Credentials object with a session ID created by the server.
         :rtype: Credentials
         """
-        auth_data = dict(
-            database=self.credentials.database, userName=self.credentials.username, password=self.credentials.password
-        )
-        auth_data["global"] = is_global
+        auth_data = {
+            "database": self.credentials.database,
+            "userName": self.credentials.username,
+            "password": self.credentials.password,
+            "global": is_global,
+        }
         try:
             result = _query(self._server, "Authenticate", auth_data, self.timeout, verify_ssl=self._is_verify_ssl)
             if result:
@@ -219,7 +279,7 @@ class API(object):
                 )
             raise
 
-    async def call_async(self, method, **parameters):
+    async def call_async(self, method: str, **parameters):
         """Makes an async call to the API.
 
         :param method: The method name.
@@ -253,7 +313,7 @@ class API(object):
                     )
             raise
 
-    async def multi_call_async(self, calls):
+    async def multi_call_async(self, calls: List[MultiCallParam]):
         """Performs an async multi-call to the API
 
         :param calls: A list of call 2-tuples with method name and params (for example, ('Get', dict(typeName='Trip')) )
@@ -264,7 +324,7 @@ class API(object):
         formatted_calls = [dict(method=call[0], params=call[1] if len(call) > 1 else {}) for call in calls]
         return await self.call_async("ExecuteMultiCall", calls=formatted_calls)
 
-    async def get_async(self, type_name, **parameters):
+    async def get_async(self, type_name: str, **parameters):
         """Gets entities asynchronously using the API. Shortcut for using async_call() with the 'Get' method.
 
         :param type_name: The type of entity.
@@ -282,7 +342,7 @@ class API(object):
             parameters = dict(search=parameters, resultsLimit=results_limit)
         return await self.call_async("Get", type_name=type_name, **parameters)
 
-    async def add_async(self, type_name, entity):
+    async def add_async(self, type_name: str, entity: dict):
         """
         Adds an entity asynchronously using the API. Shortcut for using async_call() with the 'Add' method.
 
@@ -294,7 +354,7 @@ class API(object):
         """
         return await self.call_async("Add", type_name=type_name, entity=entity)
 
-    async def set_async(self, type_name, entity):
+    async def set_async(self, type_name: str, entity: dict):
         """Sets an entity asynchronously using the API. Shortcut for using async_call() with the 'Set' method.
 
         :param type_name: The type of entity
@@ -303,7 +363,7 @@ class API(object):
         """
         return await self.call_async("Set", type_name=type_name, entity=entity)
 
-    async def remove_async(self, type_name, entity):
+    async def remove_async(self, type_name: str, entity: dict):
         """Removes an entity asynchronously using the API. Shortcut for using async_call() with the 'Remove' method.
 
         :param type_name: The type of entity.
@@ -314,7 +374,7 @@ class API(object):
         return await self.call_async("Remove", type_name=type_name, entity=entity)
 
     @staticmethod
-    def from_credentials(credentials):
+    def from_credentials(credentials: Credentials):
         """Returns a new API object from an existing Credentials object.
 
         :param credentials: The existing saved credentials.
@@ -335,7 +395,7 @@ class EntityList(UserList):
     """The customized result list
     """
 
-    def __init__(self, data, type_name):
+    def __init__(self, data: List, type_name: str):
         """Gets entities using the API. Shortcut for using call() with the 'Get' method.
 
         :param data: The list of result data.
@@ -458,47 +518,6 @@ class EntityList(UserList):
         return pandas.DataFrame.from_dict(self.data)
 
 
-class Credentials(object):
-    """The MyGeotab Credentials object.
-    """
-
-    def __init__(self, username, session_id, database, server, password=None):
-        """Initialize the Credentials object.
-
-        :param username: The username used for MyGeotab servers. Usually an email address.
-        :type username: str
-        :param session_id: A session ID, assigned by the server.
-        :type session_id: str
-        :param database: The database or company name. Optional as this usually gets resolved upon authentication.
-        :type database: str or None
-        :param server: The server ie. my23.geotab.com. Optional as this usually gets resolved upon authentication.
-        :type server: str or None
-        :param password: The password associated with the username. Optional if `session_id` is provided.
-        :type password: str or None
-        """
-        self.username = username
-        self.session_id = session_id
-        self.database = database
-        self.server = server
-        self.password = password
-
-    def __str__(self):
-        return "{0} @ {1}/{2}".format(self.username, self.server, self.database)
-
-    def __repr__(self):
-        return "Credentials(username={username}, database={database})".format(
-            username=self.username, database=self.database
-        )
-
-    def get_param(self):
-        """A simple representation of the credentials object for passing into the API.authenticate() server call.
-
-        :return: The simple credentials object for use by API.authenticate().
-        :rtype: dict
-        """
-        return dict(userName=self.username, sessionId=self.session_id, database=self.database)
-
-
 class GeotabHTTPAdapter(HTTPAdapter):
     """HTTP adapter to force use of TLS 1.2 for HTTPS connections.
     """
@@ -509,7 +528,7 @@ class GeotabHTTPAdapter(HTTPAdapter):
         )
 
 
-def _query(server, method, parameters, timeout=DEFAULT_TIMEOUT, verify_ssl=True):
+def _query(server: str, method: str, parameters: dict, timeout: int = DEFAULT_TIMEOUT, verify_ssl: bool = True):
     """Formats and performs the query against the API.
 
     :param server: The MyGeotab server.
@@ -519,7 +538,7 @@ def _query(server, method, parameters, timeout=DEFAULT_TIMEOUT, verify_ssl=True)
     :param parameters: The parameters to send with the query.
     :type parameters: dict
     :param timeout: The timeout to make the call, in seconds. By default, this is 300 seconds (or 5 minutes).
-    :type timeout: float
+    :type timeout: int
     :param verify_ssl: If True, verify the SSL certificate. It's recommended not to modify this.
     :type verify_ssl: bool
     :raise MyGeotabException: Raises when an exception occurs on the MyGeotab server.
@@ -550,7 +569,7 @@ def _query(server, method, parameters, timeout=DEFAULT_TIMEOUT, verify_ssl=True)
     return _process(json_deserialize(response.text))
 
 
-def _process(data):
+def _process(data: dict) -> dict:
     """Processes the returned JSON from the server.
 
     :param data: The JSON data in dict form.
@@ -565,7 +584,9 @@ def _process(data):
     return data
 
 
-async def server_call_async(method, server, timeout=DEFAULT_TIMEOUT, verify_ssl=True, **parameters):
+async def server_call_async(
+    method: str, server: str, timeout: int = DEFAULT_TIMEOUT, verify_ssl: bool = True, **parameters
+) -> dict:
     """Makes an asynchronous call to an un-authenticated method on a server.
 
     :param method: The method name.
@@ -585,7 +606,9 @@ async def server_call_async(method, server, timeout=DEFAULT_TIMEOUT, verify_ssl=
     return await _query_async(server, method, parameters, timeout=timeout, verify_ssl=verify_ssl)
 
 
-async def _query_async(server, method, parameters, timeout=DEFAULT_TIMEOUT, verify_ssl=True):
+async def _query_async(
+    server: str, method: str, parameters: dict, timeout: int = DEFAULT_TIMEOUT, verify_ssl: bool = True
+):
     """Formats and performs the asynchronous query against the API
 
     :param server: The server to query.
@@ -617,7 +640,7 @@ async def _query_async(server, method, parameters, timeout=DEFAULT_TIMEOUT, veri
     return _process(json_deserialize(body))
 
 
-def server_call(method, server, timeout=DEFAULT_TIMEOUT, verify_ssl=True, **parameters):
+def server_call(method: str, server: str, timeout: int = DEFAULT_TIMEOUT, verify_ssl: bool = True, **parameters):
     """Makes a call to an un-authenticated method on a server
 
     :param method: The method name.
@@ -625,7 +648,7 @@ def server_call(method, server, timeout=DEFAULT_TIMEOUT, verify_ssl=True, **para
     :param server: The MyGeotab server.
     :type server: str
     :param timeout: The timeout to make the call, in seconds. By default, this is 300 seconds (or 5 minutes).
-    :type timeout: float
+    :type timeout: int
     :param verify_ssl: If True, verify the SSL certificate. It's recommended not to modify this.
     :type verify_ssl: bool
     :param parameters: Additional parameters to send (for example, search=dict(id='b123') ).
@@ -641,7 +664,7 @@ def server_call(method, server, timeout=DEFAULT_TIMEOUT, verify_ssl=True, **para
     return _query(server, method, parameters, timeout=timeout, verify_ssl=verify_ssl)
 
 
-def process_parameters(parameters):
+def process_parameters(parameters: dict) -> dict:
     """Allows the use of Pythonic-style parameters with underscores instead of camel-case.
 
     :param parameters: The parameters object.
@@ -663,7 +686,7 @@ def process_parameters(parameters):
     return params
 
 
-def get_api_url(server):
+def get_api_url(server: str) -> str:
     """Formats the server URL properly in order to query the API.
 
     :return: A valid MyGeotab API request URL.
@@ -675,7 +698,7 @@ def get_api_url(server):
     return "https://" + base_url + "/apiv1"
 
 
-def get_headers():
+def get_headers() -> dict:
     """Gets the request headers.
 
     :return: The user agent
