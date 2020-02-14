@@ -9,34 +9,20 @@ JSON serialization and deserialization helper objects for the MyGeotab API.
 
 import re
 
-import arrow
-
-use_rapidjson = False
-try:
-    import rapidjson
-
-    DATETIME_MODE = rapidjson.DM_SHIFT_TO_UTC | rapidjson.DM_ISO8601
-
-    use_rapidjson = True
-except ImportError:
-    pass
-import json
-
+import rapidjson
+from dateutil.parser import parse
 from mygeotab import dates
 
+DATETIME_MODE = rapidjson.DM_SHIFT_TO_UTC | rapidjson.DM_ISO8601
 DATETIME_REGEX = re.compile(r"^\d{4}\-\d{2}\-\d{2}")
 
 
 def json_serialize(obj):
-    if use_rapidjson:
-        return rapidjson.dumps(obj, default=object_serializer)
-    return json.dumps(obj, default=object_serializer, separators=(",", ":"))
+    return rapidjson.dumps(obj, default=object_serializer)
 
 
 def json_deserialize(json_str: str):
-    if use_rapidjson:
-        return rapidjson.loads(json_str, datetime_mode=DATETIME_MODE)
-    return json.loads(json_str, object_hook=object_deserializer)
+    return rapidjson.loads(json_str, datetime_mode=DATETIME_MODE)
 
 
 def object_serializer(obj):
@@ -55,7 +41,7 @@ def object_deserializer(obj):
     for key, val in obj.items():
         if isinstance(val, str) and DATETIME_REGEX.search(val):
             try:
-                obj[key] = dates.localize_datetime(arrow.get(val).datetime)
-            except (ValueError, arrow.parser.ParserError):
+                obj[key] = dates.localize_datetime(parse(val))
+            except (ValueError):
                 obj[key] = val
     return obj

@@ -13,8 +13,6 @@ from tests.test_api_call import USERNAME, PASSWORD, DATABASE, TRAILER_NAME
 USERNAME = os.environ.get("MYGEOTAB_USERNAME_ASYNC", USERNAME)
 PASSWORD = os.environ.get("MYGEOTAB_PASSWORD_ASYNC", PASSWORD)
 
-pytestmark = pytest.mark.skipif(sys.version_info < (3, 5), reason="Only testing API on Python 3.5")
-
 
 @pytest.fixture(scope="session")
 def async_populated_api():
@@ -109,6 +107,12 @@ class TestAsyncCallApi:
 
     @pytest.mark.asyncio
     async def test_call_without_credentials(self):
+        if not USERNAME:
+            pytest.skip(
+                "Can't make calls to the API without the "
+                "MYGEOTAB_USERNAME and MYGEOTAB_PASSWORD "
+                "environment variables being set"
+            )
         new_api = API(USERNAME, password=PASSWORD, database=DATABASE, server=None)
         user = await new_api.get_async("User", name="{0}".format(USERNAME))
         assert len(user) == 1

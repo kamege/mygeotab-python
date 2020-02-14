@@ -9,7 +9,6 @@ Date helper objects for timezone shifting and date formatting for the MyGeotab A
 
 from datetime import datetime
 
-import arrow
 import pytz
 
 MIN_DATE = pytz.utc.localize(datetime(1, 1, 1))
@@ -31,7 +30,7 @@ def format_iso_datetime(datetime_obj: datetime):
         datetime_obj = MIN_DATE
     elif datetime_obj > MAX_DATE:
         datetime_obj = MAX_DATE
-    return arrow.get(datetime_obj).format("YYYY-MM-DDTHH:mm:ss.SSS") + "Z"
+    return datetime_obj.strftime("%4Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 def localize_datetime(datetime_obj: datetime, tz: pytz.BaseTzInfo = pytz.utc):

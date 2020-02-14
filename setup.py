@@ -34,13 +34,13 @@ setup(
     url="https://github.com/geotab/mygeotab-python",
     description="An unofficial Python client for the MyGeotab API",
     long_description=readme + "\n\n" + changelog,
-    extras_require={"notebook": ["pandas"], ":python_version>='3.5'": ["aiohttp", "python-rapidjson"]},
+    extras_require={"notebook": ["pandas"]},
     test_suite="tests",
     include_package_data=True,
     packages=packages,
     package_data={"": ["LICENSE"]},
     license="Apache 2.0",
-    install_requires=["requests", "click", "pytz", "arrow"],
+    install_requires=["requests", "click", "pytz", "python-dateutil", "aiohttp", "python-rapidjson"],
     setup_requires=["wheel"],
     entry_points="""
         [console_scripts]

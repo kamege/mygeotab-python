@@ -13,8 +13,6 @@ PASSWORD = os.environ.get("MYGEOTAB_PASSWORD")
 DATABASE = os.environ.get("MYGEOTAB_DATABASE")
 TRAILER_NAME = "mygeotab-python test trailer"
 
-pytestmark = pytest.mark.skipif(sys.version_info < (3, 5), reason="Only running API call tests on Python 3.5")
-
 
 @pytest.fixture(scope="session")
 def populated_api():
