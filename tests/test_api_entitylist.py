@@ -63,7 +63,7 @@ class TestEntityList:
 
     def test_single_entity(self):
         entitylist = get_entitylist()
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             assert entitylist.entity["id"] == "NoDeviceId"
         sub_entitylist = entitylist[0:1]
         assert sub_entitylist.entity["id"] == "NoDeviceId"

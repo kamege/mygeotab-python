@@ -10,16 +10,17 @@ pytest = "*"
 pytest-cov = "*"
 rope = "*"
 mygeotab = {editable = true,path = "."}
-mypy = {markers = "python_version >= '3.5'",version = "*"}
-pytest-asyncio = {markers = "python_version >= '3.5'",version = "*"}
-sphinx = {markers = "python_version >= '3'",version = "*"}
-sphinx-rtd-theme = {markers = "python_version >= '3'",version = "*"}
+mypy = "*"
+pytest-asyncio = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
 black = {markers = "python_version >= '3.6'",version = "*"}
 requests-mock = "*"
 pytest-datadir = "*"
 pytest-benchmark = "*"
 pytest-monkeytype = {markers = "python_version >= '3.6'",version = "*"}
 pandas = "*"
+bandit = "*"
 
 [packages]
 mygeotab = {path = "."}

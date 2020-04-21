@@ -1,11 +1,10 @@
-1# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-import json
 from datetime import date, datetime
 
 import pytz
 
-from mygeotab import serializers, dates
+from mygeotab import dates
 from mygeotab.serializers import json_serialize, json_deserialize
 
 

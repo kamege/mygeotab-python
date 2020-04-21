@@ -497,7 +497,8 @@ class EntityList(UserList):
         :rtype: dict
         """
         data_length = len(self.data)
-        assert data_length == 1, "Expecting one entity, but {} entities were returned".format(data_length)
+        if data_length != 1:
+            raise ValueError("Expecting one entity, but {} entities were returned".format(data_length))
         return self.first
 
     def to_dataframe(self, normalize=False):
